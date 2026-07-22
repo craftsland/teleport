@@ -211,6 +211,14 @@ func UserTLSKeyPath(baseDir, proxy, username string) string {
 	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+fileExtTLSKey)
 }
 
+// UserEncryptionKeyPath returns the path to the user's ECIES P-256
+// encryption private key for the given proxy.
+//
+// <baseDir>/keys/<proxy>/<username>.enc_key
+func UserEncryptionKeyPath(baseDir, proxy, username string) string {
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+".enc_key")
+}
+
 // TLSCertPath returns the path to the users's TLS certificate
 // for the given proxy.
 //
