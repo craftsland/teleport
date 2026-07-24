@@ -130,8 +130,8 @@ func (r Resource[T, I]) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	}
 
 	id := r.resource.Identifier.FromResource(val)
-	_, err := r.resourceClient.Get(ctx, id)
-	if !trace.IsNotFound(err) {
+	existing, err := r.resourceClient.Get(ctx, id)
+	if !r.isResourceAbsent(existing, err) {
 		if err == nil {
 			resp.Diagnostics.Append(
 				tfdiag.DiagFromErr(
@@ -159,7 +159,7 @@ func (r Resource[T, I]) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 
 	for tries := 1; ; tries++ {
 		retrieved, err := r.resourceClient.Get(ctx, id)
-		if trace.IsNotFound(err) {
+		if r.isResourceAbsent(retrieved, err) {
 			if tries >= r.runtime.MaxRetries() {
 				diagMessage := fmt.Sprintf("Error reading %q (tried %d times) - state outdated, please import resource", r.resource.Kind, tries)
 				resp.Diagnostics.AddError(diagMessage, r.resource.Kind)
@@ -373,4 +373,26 @@ func (r Resource[T, I]) ImportState(ctx context.Context, req tfsdk.ImportResourc
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+// isResourceAbsent returns true if no user-created resource exists.
+func (r Resource[T, I]) isResourceAbsent(t *T, err error) bool {
+	switch {
+	case trace.IsNotFound(err):
+		return true
+
+	case err == nil && t != nil && r.resource.ResourceRevision != nil:
+		// If a resource is fetched successfully, check if it is a singleton
+		// virtual default which has no revision.
+		return r.isSingleton(t) && r.resource.ResourceRevision(t) == ""
+
+	default:
+		return false
+	}
+}
+
+func (r Resource[T, I]) isSingleton(t *T) bool {
+	id := r.resource.Identifier.FromResource(t)
+	_, ok := any(id).(SingletonIdentifier)
+	return ok
 }

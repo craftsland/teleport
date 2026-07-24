@@ -566,6 +566,7 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 	genericResourceTypes := map[string]tfsdk.ResourceType{
 		"teleport_app":          resources.NewAppResourceType(),
 		"teleport_scoped_token": resources.NewScopedTokenResourceType(),
+		"teleport_beams_config": resources.NewBeamsConfigResourceType(),
 	}
 
 	maps.Insert(resourceTypes, maps.All(genericResourceTypes))
@@ -580,6 +581,7 @@ func (p *Provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourc
 	genericDataSourceTypes := map[string]tfsdk.DataSourceType{
 		"teleport_app":          resources.NewAppDataSourceType(),
 		"teleport_scoped_token": resources.NewScopedTokenDataSourceType(),
+		"teleport_beams_config": resources.NewBeamsConfigDataSourceType(),
 	}
 
 	maps.Insert(dataSourceTypes, maps.All(genericDataSourceTypes))
