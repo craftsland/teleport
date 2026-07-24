@@ -61,17 +61,33 @@ func CompileWhere(expr string) (*Where, error) {
 // the caller identity. On error it reports no match, so a caller that
 // ignores the error denies rather than allows.
 func (w *Where) Evaluate(request Request, identity Identity) (bool, error) {
-	match, err := w.expression.Evaluate(env{request: request, user: identity})
+	match, err := w.expression.Evaluate(newEnv(request, identity))
 	if err != nil {
 		return false, trace.Wrap(err)
 	}
 	return match, nil
 }
 
-// env holds the values one where clause evaluation reads.
+// env holds the values one where clause evaluation reads, and the
+// state the audit wrappers record into.
 type env struct {
 	request Request
 	user    Identity
+	state   *evalState
+}
+
+// evalState holds the side effects of one evaluation for the caller. It
+// is held by pointer so the same instance is observed across the whole
+// expression tree, even though env is passed by value. On error the
+// state may be partially populated and must be discarded. allowCode is
+// meaningful only when the evaluation returned true, and denyHints only
+// when it returned false.
+type evalState struct {
+	// allowCode and allowReason hold the last successful allow_code call.
+	allowCode   string
+	allowReason string
+	// denyHints records deny_hint calls in evaluation order.
+	denyHints []Hint
 }
 
 // whereParser is the shared cached parser for where clauses. It
@@ -102,6 +118,35 @@ func mustNewWhereParser() *typical.CachedParser[env, bool] {
 			}),
 		},
 		Functions: map[string]typical.Function{
+			// allow_code records an audit code and reason and returns the
+			// wrapped boolean, so it never flips the result. The record is
+			// committed only when the wrapped expression is true. When
+			// several allow_code calls fire on one evaluation, the last one
+			// wins.
+			"allow_code": typical.TernaryFunctionWithEnv(func(e env, code, reason string, expr bool) (bool, error) {
+				if err := validateAuditCode(code); err != nil {
+					return false, trace.Wrap(err)
+				}
+				if expr {
+					e.state.allowCode = code
+					e.state.allowReason = reason
+				}
+				return expr, nil
+			}),
+			// deny_hint records a near-miss hint and returns the wrapped
+			// boolean, so it never flips the result. The hint is committed
+			// only when the call is reached and the wrapped expression is
+			// false. Under &&, that is the near-miss where the conditions on
+			// its left matched but this one did not.
+			"deny_hint": typical.TernaryFunctionWithEnv(func(e env, code, reason string, expr bool) (bool, error) {
+				if err := validateAuditCode(code); err != nil {
+					return false, trace.Wrap(err)
+				}
+				if !expr {
+					e.state.denyHints = append(e.state.denyHints, Hint{Code: code, Reason: reason})
+				}
+				return expr, nil
+			}),
 			// set is a collection of strings for contains membership
 			// tests. Both match the functions of the same names in the
 			// role where-clause language, services.NewWhereParser.
@@ -140,4 +185,34 @@ func mustNewWhereParser() *typical.CachedParser[env, bool] {
 		panic(trace.Wrap(err, "building the where clause parser (this is a bug)"))
 	}
 	return p
+}
+
+// predicate is a parsed, type-checked app-access predicate ready to
+// evaluate. A rule lowers to one predicate, and an
+// app_resources_expressions entry compiles to one directly.
+type predicate = typical.Expression[env, bool]
+
+// compilePredicate parses and type-checks a predicate, and runs the
+// compile-time audit code validation. Unlike CompileWhere it accepts
+// the full predicate language, including the audit wrappers.
+func compilePredicate(expr string) (predicate, error) {
+	pred, err := whereParser.Parse(expr)
+	if err != nil {
+		return nil, trace.BadParameter("compiling predicate %q: %v", expr, err)
+	}
+	if err := validateAuditCodes(expr); err != nil {
+		return nil, trace.Wrap(err, "compiling predicate %q", expr)
+	}
+	return pred, nil
+}
+
+// newEnv builds a fresh evaluation environment for one request. The
+// state is fresh per call, so concurrent evaluations never share
+// recorded codes or hints.
+func newEnv(request Request, identity Identity) env {
+	return env{
+		request: request,
+		user:    identity,
+		state:   &evalState{},
+	}
 }
