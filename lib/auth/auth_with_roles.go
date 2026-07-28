@@ -1338,6 +1338,8 @@ func unscopedWatchKindException(kind string) (ura services.UnpinnedReadAuthoriza
 		return services.UnpinnedReadClusterNetworkingConfig, true
 	case types.KindClusterAuthPreference:
 		return services.UnpinnedReadAuthPreference, true
+	case types.KindClusterAuditConfig:
+		return services.UnpinnedReadClusterAuditConfig, true
 	case types.KindSessionRecordingConfig:
 		return services.UnpinnedReadSessionRecordingConfig, true
 	default:
@@ -5898,9 +5900,14 @@ func (a *ServerWithRoles) DeleteAllInstallers(ctx context.Context) error {
 }
 
 // GetClusterAuditConfig gets cluster audit configuration.
-func (a *ServerWithRoles) GetClusterAuditConfig(ctx context.Context) (types.ClusterAuditConfig, error) {
-	if err := a.authorizeAction(types.KindClusterAuditConfig, types.VerbRead); err != nil {
-		if err2 := a.authorizeAction(types.KindClusterConfig, types.VerbRead); err2 != nil {
+func (a *ScopedServerWithRoles) GetClusterAuditConfig(ctx context.Context) (types.ClusterAuditConfig, error) {
+	ruleCtx := a.scopedContext.RuleContext()
+	if err := a.scopedContext.CheckerContext.RiskyAuthorizeUnpinnedRead(ctx, services.UnpinnedReadClusterAuditConfig, &ruleCtx); err != nil {
+		unscopedCtx, isUnscoped := a.scopedContext.UnscopedContext()
+		if !isUnscoped {
+			return nil, trace.Wrap(err)
+		}
+		if err2 := unscopedCtx.CheckAccessToKind(types.KindClusterConfig, types.VerbRead); err2 != nil {
 			return nil, trace.Wrap(err)
 		}
 	}

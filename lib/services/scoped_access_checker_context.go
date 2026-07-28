@@ -687,4 +687,11 @@ var (
 		kind:          types.KindLock,
 		verbs:         []string{types.VerbRead},
 	}
+	// UnpinnedReadClusterAuditConfig is a special authorization to complete an unscoped access check
+	// to read a cluster audit config.
+	UnpinnedReadClusterAuditConfig = UnpinnedReadAuthorization{
+		resourceScope: scopes.Root,
+		kind:          types.KindClusterAuditConfig,
+		verbs:         []string{types.VerbRead},
+	}
 )
