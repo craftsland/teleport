@@ -1332,6 +1332,14 @@ func unscopedWatchKindException(kind string) (ura services.UnpinnedReadAuthoriza
 		return services.UnpinnedReadSPIFFEFederation, true
 	case types.KindLock:
 		return services.UnpinnedReadLock, true
+	case types.KindClusterName:
+		return services.UnpinnedReadClusterName, true
+	case types.KindClusterNetworkingConfig:
+		return services.UnpinnedReadClusterNetworkingConfig, true
+	case types.KindClusterAuthPreference:
+		return services.UnpinnedReadAuthPreference, true
+	case types.KindSessionRecordingConfig:
+		return services.UnpinnedReadSessionRecordingConfig, true
 	default:
 		return services.UnpinnedReadAuthorization{}, false
 	}
