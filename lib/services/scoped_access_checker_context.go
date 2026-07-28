@@ -673,4 +673,18 @@ var (
 		kind:          types.KindRole,
 		verbs:         []string{types.VerbRead},
 	}
+	// UnpinnedReadAndListLock is a special authorization to complete an unscoped access check
+	// to read a lock.
+	UnpinnedReadAndListLock = UnpinnedReadAuthorization{
+		resourceScope: scopes.Root,
+		kind:          types.KindLock,
+		verbs:         []string{types.VerbList, types.VerbRead},
+	}
+	// UnpinnedReadLock is a special authorization to complete an unscoped access check
+	// to read a lock.
+	UnpinnedReadLock = UnpinnedReadAuthorization{
+		resourceScope: scopes.Root,
+		kind:          types.KindLock,
+		verbs:         []string{types.VerbRead},
+	}
 )
