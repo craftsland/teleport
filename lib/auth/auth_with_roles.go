@@ -7359,24 +7359,27 @@ func (a *ServerWithRoles) SearchSessionEvents(ctx context.Context, req events.Se
 }
 
 // GetLock gets a lock by name.
-func (a *ServerWithRoles) GetLock(ctx context.Context, name string) (types.Lock, error) {
-	if err := a.authorizeAction(types.KindLock, types.VerbRead); err != nil {
+func (a *ScopedServerWithRoles) GetLock(ctx context.Context, name string) (types.Lock, error) {
+	ruleCtx := a.scopedContext.RuleContext()
+	if err := a.scopedContext.CheckerContext.RiskyAuthorizeUnpinnedRead(ctx, services.UnpinnedReadLock, &ruleCtx); err != nil {
 		return nil, trace.Wrap(err)
 	}
 	return a.authServer.GetLock(ctx, name)
 }
 
 // GetLocks gets all/in-force locks that match at least one of the targets when specified.
-func (a *ServerWithRoles) GetLocks(ctx context.Context, inForceOnly bool, targets ...types.LockTarget) ([]types.Lock, error) {
-	if err := a.authorizeAction(types.KindLock, types.VerbList, types.VerbRead); err != nil {
+func (a *ScopedServerWithRoles) GetLocks(ctx context.Context, inForceOnly bool, targets ...types.LockTarget) ([]types.Lock, error) {
+	ruleCtx := a.scopedContext.RuleContext()
+	if err := a.scopedContext.CheckerContext.RiskyAuthorizeUnpinnedRead(ctx, services.UnpinnedReadAndListLock, &ruleCtx); err != nil {
 		return nil, trace.Wrap(err)
 	}
 	return a.authServer.Cache.GetLocks(ctx, inForceOnly, targets...)
 }
 
 // ListLocks returns a page of locks
-func (a *ServerWithRoles) ListLocks(ctx context.Context, limit int, startKey string, filter *types.LockFilter) ([]types.Lock, string, error) {
-	if err := a.authorizeAction(types.KindLock, types.VerbList, types.VerbRead); err != nil {
+func (a *ScopedServerWithRoles) ListLocks(ctx context.Context, limit int, startKey string, filter *types.LockFilter) ([]types.Lock, string, error) {
+	ruleCtx := a.scopedContext.RuleContext()
+	if err := a.scopedContext.CheckerContext.RiskyAuthorizeUnpinnedRead(ctx, services.UnpinnedReadAndListLock, &ruleCtx); err != nil {
 		return nil, "", trace.Wrap(err)
 	}
 
