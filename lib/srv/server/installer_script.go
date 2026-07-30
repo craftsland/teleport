@@ -257,7 +257,7 @@ func preFlightInstallerChecks(proxyAddr string) map[installstatus.ExitCode]strin
 	}
 }
 
-func installerScriptWindowsDesktop(ctx context.Context, params *types.InstallerParams, opts ...scriptOption) (string, error) {
+func installerScriptWindowsAuthPackage(ctx context.Context, params *types.InstallerParams, opts ...scriptOption) (string, error) {
 	proxyAddr, scriptURL, scriptOptions, err := resolveInstallerScript(ctx, params, opts...)
 	if err != nil {
 		return "", trace.Wrap(err)
@@ -284,38 +284,37 @@ func installerScriptWindowsDesktop(ctx context.Context, params *types.InstallerP
 		}
 	}
 
-	var installationScript string
+	var installationScript strings.Builder
 
 	// Abort on any error and enable TLS 1.2 before any HTTPS request. Windows
 	// PowerShell 5.1 does not always negotiate it by default. This must precede
 	// the pre-flight proxy check, which also makes an HTTPS request.
-	installationScript += `$ErrorActionPreference = 'Stop'; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; `
+	installationScript.WriteString(`$ErrorActionPreference = 'Stop'; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; `)
 
 	// Export env vars before pre-flight checks so that proxy network check can
 	// use http proxy settings if they are provided in the installer params.
 	envVars := envVarsFromInstallerParamsWindows(params)
 	if len(envVars) > 0 {
-		installationScript += strings.Join(envVars, "; ") + "; "
+		installationScript.WriteString(strings.Join(envVars, "; "))
+		installationScript.WriteString("; ")
 	}
 
-	installationScript += preFlightChecksScript(preFlightInstallerChecksWindows(proxyAddr, proxyCheck))
+	installationScript.WriteString(preFlightChecksScript(preFlightInstallerChecksWindows(proxyAddr, proxyCheck)))
 
 	// Fetch the installer script from the proxy and run it in the current session
 	// using iex so it inherits the env vars set above. Set UseBasicParsing to
 	// avoid using IE engine for parsing.
-	installationScript += fmt.Sprintf(`$req = @{ Uri = %s; UseBasicParsing = $true }%s; iex (Invoke-WebRequest @req).Content`,
+	installationScript.WriteString(fmt.Sprintf(`$req = @{ Uri = %s; UseBasicParsing = $true }%s; iex (Invoke-WebRequest @req).Content`,
 		escapePowerShellSingleQuoted(scriptURL),
 		proxyCheck,
-	)
+	))
 
 	if scriptOptions.addNonceComment {
-		bytes := make([]byte, 8)
-		rand.Read(bytes)
-
-		installationScript += " # " + hex.EncodeToString(bytes)
+		installationScript.WriteString(" # ")
+		installationScript.WriteString(rand.Text())
 	}
 
-	return installationScript, nil
+	return installationScript.String(), nil
 }
 
 // preFlightInstallerChecksWindows returns the Windows pre-flight checks.
@@ -344,7 +343,7 @@ func preFlightInstallerChecksWindows(proxyAddr, proxyCheck string) map[installst
 
 		// Check if there's enough disk space on the system drive for the installation
 		installstatus.WindowsInsufficientDiskSpace: fmt.Sprintf(`if (([System.IO.DriveInfo]$env:SystemDrive).AvailableFreeSpace -lt %dMB) %s`,
-			installstatus.WindowsDesktopInstallerMinFreeDiskMB,
+			installstatus.WindowsAuthPackageInstallerMinFreeDiskMB,
 			exitWithMessage(installstatus.WindowsInsufficientDiskSpace, "Insufficient disk space")),
 
 		// Check if network connection to the proxy is available. Route through

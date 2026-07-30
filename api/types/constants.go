@@ -1889,9 +1889,9 @@ const (
 	// installer script when agentless mode is enabled for a matcher
 	DefaultInstallerScriptNameAgentless = "default-agentless-installer"
 
-	// DefaultInstallerScriptNameWindowsDesktop is the name of the default populated
+	// DefaultInstallerScriptNameWindowsAuthPackage is the name of the default populated
 	// installer script for Windows nodes
-	DefaultInstallerScriptNameWindowsDesktop = "default-installer-windows-desktop"
+	DefaultInstallerScriptNameWindowsAuthPackage = "default-installer-windows-auth-package"
 )
 
 const (

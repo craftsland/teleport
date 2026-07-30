@@ -82,10 +82,10 @@ func TestNewDefaultInstaller(t *testing.T) {
 	require.Equal(t, defaultInstallerSnapshot, buf.String())
 }
 
-// defaultWindowsDesktopInstallerSnapshot is the rendered Windows desktop
-// installer with RestartAfterEnrollment set. TEST_CA_BUNDLE stands in for the
+// defaultWindowsAuthPackageInstallerSnapshot is the rendered Windows auth
+// package installer with RestartAfterEnrollment set. TEST_CA_BUNDLE stands in for the
 // base64 CA the getWindowsCA template func produces at runtime.
-const defaultWindowsDesktopInstallerSnapshot = `$ErrorActionPreference = 'Stop'
+const defaultWindowsAuthPackageInstallerSnapshot = `$ErrorActionPreference = 'Stop'
 $ProgressPreference    = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 $Version = '1.2.3'
@@ -135,14 +135,14 @@ Write-Host "Scheduling a system restart in 60 seconds to complete the enrollment
 & shutdown.exe /r /t 60 /c "Restarting to complete Teleport enrollment process"
 `
 
-func TestDefaultWindowsDesktopInstaller(t *testing.T) {
+func TestDefaultWindowsAuthPackageInstaller(t *testing.T) {
 	// Insert a stub getWindowsCA template func to avoid getting a real CA
 	parse := func() *template.Template {
 		tmpl, err := template.New("").
 			Funcs(template.FuncMap{
 				"getWindowsCA": func() (string, error) { return "TEST_CA_BUNDLE", nil },
 			}).
-			Parse(installer.DefaultWindowsDesktopInstaller.GetScript())
+			Parse(installer.DefaultWindowsAuthPackageInstaller.GetScript())
 		require.NoError(t, err)
 		return tmpl
 	}
@@ -160,7 +160,7 @@ func TestDefaultWindowsDesktopInstaller(t *testing.T) {
 	}
 
 	// With a restart, the snapshot matches the generated script
-	require.Equal(t, defaultWindowsDesktopInstallerSnapshot, render(true /* restart */))
+	require.Equal(t, defaultWindowsAuthPackageInstallerSnapshot, render(true /* restart */))
 
 	// Without a restart, the reboot-notice branch is taken instead.
 	withoutRestart := render(false /* don't restart */)

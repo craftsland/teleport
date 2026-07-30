@@ -2669,7 +2669,7 @@ func (h *Handler) installer(w http.ResponseWriter, r *http.Request, p httprouter
 	}
 	azureClientID := r.URL.Query().Get("azure-client-id")
 
-	// For windows desktop installer scripts, we need to know if the installer
+	// For windows auth package installer scripts, we need to know if the installer
 	// should restart the machine after installation. A restart is required before
 	// smartcard authentication can be used, but we give the user the option
 	// because they may not want to restart immediately.
@@ -2682,7 +2682,7 @@ func (h *Handler) installer(w http.ResponseWriter, r *http.Request, p httprouter
 		RepoChannel:                      shsprintf.EscapeDefaultContext(repoChannel),
 		AutomaticUpgrades:                strconv.FormatBool(installUpdater),
 		AzureClientID:                    shsprintf.EscapeDefaultContext(azureClientID),
-		Version:                          shsprintf.EscapeDefaultContext(targetVersion.String()),
+		AuthPackageVersion:               strings.ReplaceAll(targetVersion.String(), "'", "''"),
 		RestartAfterEnrollment:           restartAfterEnrollment,
 		WindowsInstallerDownloadFailure:  int(installstatus.WindowsInstallerDownloadFailure),
 		WindowsInstallerExecutionFailure: int(installstatus.WindowsInstallerExecutionFailure),

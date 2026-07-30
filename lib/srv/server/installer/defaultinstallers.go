@@ -26,13 +26,13 @@ import (
 	"github.com/gravitational/teleport/lib/web/scripts/oneoff"
 )
 
-const windowsDesktopScriptSetup = `$ErrorActionPreference = 'Stop'
+const windowsAuthPackageScriptSetup = `$ErrorActionPreference = 'Stop'
 $ProgressPreference    = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-$Version = '{{.Version}}'
+$Version = '{{.AuthPackageVersion}}'
 $CA = '{{getWindowsCA}}'`
 
-var windowsDesktopInstallerScript = `$InstallerName = "teleport-windows-auth-setup-v$Version-amd64.exe"
+var windowsAuthPackageInstallerScript = `$InstallerName = "teleport-windows-auth-setup-v$Version-amd64.exe"
 # Stage installer files under %WINDIR%\SystemTemp, which is only writable by
 # SYSTEM and Administrators.
 $SystemTemp    = Join-Path $env:WINDIR 'SystemTemp'
@@ -78,9 +78,9 @@ Write-Host "Scheduling a system restart in 60 seconds to complete the enrollment
 Write-Host "A reboot is required to complete installation."
 {{end}}`
 
-var DefaultWindowsDesktopInstaller = types.MustNewInstallerV1(
-	installers.InstallerScriptNameWindowsDesktop,
-	strings.Join([]string{windowsDesktopScriptSetup, windowsDesktopInstallerScript}, "\n\n"),
+var DefaultWindowsAuthPackageInstaller = types.MustNewInstallerV1(
+	installers.InstallerScriptNameWindowsAuthPackage,
+	strings.Join([]string{windowsAuthPackageScriptSetup, windowsAuthPackageInstallerScript}, "\n\n"),
 )
 
 const (

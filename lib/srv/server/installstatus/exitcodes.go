@@ -56,12 +56,12 @@ const (
 // If this value is updated, ensure you also update the docs at "Installation script exit codes" in the Teleport EC2 Server Discovery documentation.
 const InstallerMinFreeDiskMB = 1250
 
-// WindowsDesktopInstallerMinFreeDiskMB is the minimum free disk space in megabytes required for Teleport Authentication Package installation on Windows.
+// WindowsAuthPackageInstallerMinFreeDiskMB is the minimum free disk space in megabytes required for Teleport Authentication Package installation on Windows.
 // The .exe is very small at 5.9MB. The installer drops a .dll and a few certificates which are a few megabytes each, at most.
 // 50 MB is more than enough and provides some buffer.
 //
 // As above, if this value is updated, ensure you also update the docs at "Installation script exit codes" in the Teleport Server Discovery documentation.
-const WindowsDesktopInstallerMinFreeDiskMB = 50
+const WindowsAuthPackageInstallerMinFreeDiskMB = 50
 
 // String returns a human-readable description for the exit code.
 // Unrecognized codes get a generic fallback.
@@ -94,7 +94,7 @@ func (c ExitCode) String() string {
 		return fmt.Sprintf(
 			"Insufficient disk space for installation. "+
 				"Teleport requires at least %dMB in the system drive.",
-			WindowsDesktopInstallerMinFreeDiskMB)
+			WindowsAuthPackageInstallerMinFreeDiskMB)
 	case UnsupportedWindowsVersion:
 		return "Unsupported Windows version. " +
 			"Please ensure you are running a supported version of Windows " +

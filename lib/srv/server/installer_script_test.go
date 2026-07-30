@@ -40,12 +40,12 @@ func installerScriptChecksFor(proxyAddr string) string {
 }
 
 // windowsInstallerSetup is the fixed PowerShell setup emitted by
-// installerScriptWindowsDesktop before the pre-flight checks.
+// installerScriptWindowsAuthPackage before the pre-flight checks.
 const windowsInstallerSetup = `$ErrorActionPreference = 'Stop'; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; `
 
 // windowsInstallerProxyCheck is the PowerShell fragment injected into the proxy
 // pre-flight check and the fetch command when an HTTPS proxy applies to the
-// proxy endpoint. It mirrors the fragment in installerScriptWindowsDesktop.
+// proxy endpoint. It mirrors the fragment in installerScriptWindowsAuthPackage.
 const windowsInstallerProxyCheck = `; if ($env:HTTPS_PROXY) { $req.Proxy = $env:HTTPS_PROXY }`
 
 // windowsInstallerChecksFor returns the expected Windows pre-flight checks
@@ -241,7 +241,7 @@ func TestInstallerScript(t *testing.T) {
 	}
 }
 
-func TestInstallerScriptWindowsDesktop(t *testing.T) {
+func TestInstallerScriptWindowsAuthPackage(t *testing.T) {
 	basicParams := func() *types.InstallerParams {
 		return &types.InstallerParams{
 			PublicProxyAddr: "proxy.example.com:443",
@@ -330,7 +330,7 @@ func TestInstallerScriptWindowsDesktop(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			script, err := installerScriptWindowsDesktop(t.Context(), tt.req(), tt.withOptions...)
+			script, err := installerScriptWindowsAuthPackage(t.Context(), tt.req(), tt.withOptions...)
 			tt.errCheck(t, err)
 
 			if tt.expectedScriptContains != "" {

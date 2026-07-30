@@ -3573,9 +3573,9 @@ func TestInstallerScriptRenderedWithTextTemplate(t *testing.T) {
 	require.NotContains(t, response, "&#34;")
 }
 
-// TestInstallerScriptWindowsDesktopRendered renders the built-in Windows
-// desktop installer through the endpoint.
-func TestInstallerScriptWindowsDesktopRendered(t *testing.T) {
+// TestInstallerScriptWindowsAuthPackageRendered renders the built-in Windows
+// auth package installer through the endpoint.
+func TestInstallerScriptWindowsAuthPackageRendered(t *testing.T) {
 	t.Parallel()
 	s := newWebSuite(t)
 	wc := s.client(t)
@@ -3605,7 +3605,7 @@ func TestInstallerScriptWindowsDesktopRendered(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			re, err := wc.Get(
 				s.ctx,
-				wc.Endpoint("webapi", "scripts", "installer", "default-installer-windows-desktop"),
+				wc.Endpoint("webapi", "scripts", "installer", "default-installer-windows-auth-package"),
 				url.Values{"restart-after-enrollment": []string{tt.restartAfterEnrollment}},
 			)
 			require.NoError(t, err)
