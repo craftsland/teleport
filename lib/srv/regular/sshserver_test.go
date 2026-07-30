@@ -409,7 +409,7 @@ func TestTerminalSizeRequest(t *testing.T) {
 			size, err := f.ssh.srv.termHandlers.SessionRegistry.GetTerminalSize(sessionID)
 			require.NoError(t, err)
 			require.Empty(t, cmp.Diff(expectedSize, *size, cmp.AllowUnexported(term.Winsize{})))
-		}, 10*time.Second, 10*time.Millisecond)
+		}, 10*time.Second, 100*time.Millisecond)
 
 		// Send a request for the window size now that we know the window change
 		// request was honored.
@@ -1592,6 +1592,9 @@ func TestAgentForward(t *testing.T) {
 	// All sessions have been closed, verify agent can still be connected to.
 	file, err := net.Dial("unix", socketPath)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, file.Close())
+	})
 
 	clientAgent := agent.NewClient(file)
 
@@ -1615,13 +1618,17 @@ func TestAgentForward(t *testing.T) {
 
 	// Close the connection, after this errors are expected during cleanup,
 	// change assertion accordingly.
-	require.NoError(t, file.Close())
 	require.NoError(t, f.ssh.clt.Close())
 	f.ssh.assertCltClose = require.Error
 
-	// Connection has been closed, agent should no longer be available.
+	// Set the read deadline to not wait for more than 10 seconds. This prevents
+	// this test blocking forever. Agent should no longer be available and
+	// return an error (other than deadline exceeded).
+	require.NoError(t, file.SetDeadline(time.Now().Add(10*time.Second)))
 	_, err = clientAgent.List()
 	require.Error(t, err)
+	require.NotContains(t, err.Error(), os.ErrDeadlineExceeded.Error(),
+		"timed out waiting for the server to close the agent connection")
 }
 
 // TestX11Forward tests x11 forwarding via unix sockets
