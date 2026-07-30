@@ -88,10 +88,10 @@ func TestNewDefaultInstaller(t *testing.T) {
 const defaultWindowsAuthPackageInstallerSnapshot = `$ErrorActionPreference = 'Stop'
 $ProgressPreference    = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-$Version = '1.2.3'
+$AuthPackageVersion = '1.2.3'
 $CA = 'TEST_CA_BUNDLE'
 
-$InstallerName = "teleport-windows-auth-setup-v$Version-amd64.exe"
+$InstallerName = "teleport-windows-auth-setup-v$AuthPackageVersion-amd64.exe"
 # Stage installer files under %WINDIR%\SystemTemp, which is only writable by
 # SYSTEM and Administrators.
 $SystemTemp    = Join-Path $env:WINDIR 'SystemTemp'
@@ -150,7 +150,7 @@ func TestDefaultWindowsAuthPackageInstaller(t *testing.T) {
 	render := func(restart bool) string {
 		buf := &bytes.Buffer{}
 		require.NoError(t, parse().Execute(buf, installers.Template{
-			Version:                          "1.2.3",
+			AuthPackageVersion:               "1.2.3",
 			RestartAfterEnrollment:           restart,
 			WindowsInstallerDownloadFailure:  int(installstatus.WindowsInstallerDownloadFailure),
 			WindowsInstallerExecutionFailure: int(installstatus.WindowsInstallerExecutionFailure),

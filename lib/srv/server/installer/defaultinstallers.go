@@ -29,10 +29,10 @@ import (
 const windowsAuthPackageScriptSetup = `$ErrorActionPreference = 'Stop'
 $ProgressPreference    = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-$Version = '{{.AuthPackageVersion}}'
+$AuthPackageVersion = '{{.AuthPackageVersion}}'
 $CA = '{{getWindowsCA}}'`
 
-var windowsAuthPackageInstallerScript = `$InstallerName = "teleport-windows-auth-setup-v$Version-amd64.exe"
+var windowsAuthPackageInstallerScript = `$InstallerName = "teleport-windows-auth-setup-v$AuthPackageVersion-amd64.exe"
 # Stage installer files under %WINDIR%\SystemTemp, which is only writable by
 # SYSTEM and Administrators.
 $SystemTemp    = Join-Path $env:WINDIR 'SystemTemp'
