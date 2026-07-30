@@ -5316,8 +5316,8 @@ func (g *GRPCServer) GetInstallers(ctx context.Context, _ *emptypb.Empty) (*type
 	}
 
 	defaultInstallers := map[string]*types.InstallerV1{
-		types.DefaultInstallerScriptName:             defaultInstaller,
-		installers.InstallerScriptNameAgentless:      installers.DefaultAgentlessInstaller,
+		types.DefaultInstallerScriptName:                 defaultInstaller,
+		installers.InstallerScriptNameAgentless:          installers.DefaultAgentlessInstaller,
 		installers.InstallerScriptNameWindowsAuthPackage: installer.DefaultWindowsAuthPackageInstaller,
 	}
 
