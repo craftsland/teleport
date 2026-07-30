@@ -2555,6 +2555,9 @@ func (s *Server) handleTCPIPForwardRequest(ctx context.Context, ccx *sshutils.Co
 				logger.WarnContext(ctx, "failed to open channel", "error", err)
 				continue
 			}
+			// TODO(russjones): Add test coverage that could have discovered
+			// this regression.
+			ch = scx.TrackActivity(ch)
 			go ssh.DiscardRequests(rch)
 			go io.Copy(io.Discard, ch.Stderr())
 			go func() {
