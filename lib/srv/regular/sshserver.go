@@ -2473,7 +2473,7 @@ func (s *Server) handleTCPIPForwardRequest(ctx context.Context, ccx *sshutils.Co
 
 	// If the client didn't request a specific port, the chosen port needs to
 	// be reported back.
-	srcHost, _, err := sshutils.SplitHostPort(scx.SrcAddr)
+	srcHost, srcPort, err := sshutils.SplitHostPort(scx.SrcAddr)
 	if err != nil {
 		if lerr := listener.Close(); lerr != nil {
 			s.logger.DebugContext(ctx, "Failed while cleaning up request",
@@ -2578,11 +2578,7 @@ func (s *Server) handleTCPIPForwardRequest(ctx context.Context, ccx *sshutils.Co
 	// Report addr back to the client.
 	if r.WantReply {
 		var payload []byte
-		req, err := sshutils.ParseTCPIPForwardReq(r.Payload)
-		if err != nil {
-			return trace.Wrap(err)
-		}
-		if req.Port == 0 {
+		if srcPort == 0 {
 			payload = ssh.Marshal(struct {
 				Port uint32
 			}{Port: uint32(listener.Addr().(*net.TCPAddr).Port)})
