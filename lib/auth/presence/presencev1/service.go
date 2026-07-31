@@ -970,10 +970,7 @@ func (s *Service) DeleteSSHServer(ctx context.Context, req *presencepb.DeleteSSH
 		return nil, trace.Wrap(err)
 	}
 	if err := authContext.CheckerContext.Decision(ctx, node.GetScope(), func(checker *services.ScopedAccessChecker) error {
-		if err := checker.CheckAccessToRules(&ruleCtx, types.KindNode, types.VerbDelete); err != nil {
-			return err
-		}
-		return checker.SSH().CanAccessSSHServer(node)
+		return checker.CheckAccessToRules(&ruleCtx, types.KindNode, types.VerbDelete)
 	}); err != nil {
 		return nil, trace.Wrap(err)
 	}

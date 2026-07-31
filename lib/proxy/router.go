@@ -533,7 +533,10 @@ func getServerWithResolver(ctx context.Context, scopePin *scopesv1.Pin, host, po
 			return false
 		}
 
-		scores[server.GetName()] = score
+		// Keyed by scope-qualified name: node names are only unique within a
+		// scope, so same-named nodes in different scopes would otherwise share
+		// a single score entry and overwrite each other.
+		scores[scopes.QualifiedName{Scope: server.GetScope(), Name: server.GetName()}.String()] = score
 		maxScore = max(maxScore, score)
 		return true
 	})
@@ -587,7 +590,7 @@ func getServerWithResolver(ctx context.Context, scopePin *scopesv1.Pin, host, po
 		// mix of match qualities, filter out the lower quality matches to reduce ambiguity.
 		filtered := matches[:0]
 		for _, m := range matches {
-			if scores[m.GetName()] < maxScore {
+			if scores[scopes.QualifiedName{Scope: m.GetScope(), Name: m.GetName()}.String()] < maxScore {
 				continue
 			}
 

@@ -346,6 +346,22 @@ func TestRouteScoring(t *testing.T) {
 			hostname: "test.example.com",
 			addr:     "3.4.5.6:22",
 		},
+		{
+			// Shares a name with the node below but in a different scope, and
+			// matches "direct.example.com" by hostname (a direct match) while
+			// its twin only matches via resolved ip (an indirect match). The
+			// score map must key on scope+name or the two overwrite each other.
+			scope:    "/alpha",
+			name:     "shared-scoring-name",
+			hostname: "direct.example.com",
+			addr:     "1.2.3.4:2222",
+		},
+		{
+			scope:    "/beta",
+			name:     "shared-scoring-name",
+			hostname: "indirect.example.com",
+			addr:     "1.2.3.4:3333",
+		},
 	})
 
 	// scoring behavior is independent of routing strategy so we just
@@ -422,6 +438,13 @@ func TestRouteScoring(t *testing.T) {
 			desc:   "non-uuid name",
 			host:   "not-a-uuid",
 			expect: "test.example.com",
+		},
+		{
+			// The direct hostname match must win over its same-named twin in
+			// another scope, which only matches indirectly.
+			desc:   "same name across scopes with differing match quality",
+			host:   "direct.example.com",
+			expect: "direct.example.com",
 		},
 	}
 
